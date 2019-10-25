@@ -29,16 +29,16 @@ public class PlayerBalanceRepositoryTest {
     @Test
     public void increaseBalance() {
         for (int i = 0; i < 5; i++) {
-            playerBalanceRepository.updateBalance("john@doe.com", 4.25f);
+            playerBalanceRepository.addAmountToBalance("john@doe.com", 4.25f);
         }
         assertEquals(5*4.25f, playerBalanceRepository.getBalance("john@doe.com"), 0);
     }
 
     @Test
     public void decreaseBalance() {
-        playerBalanceRepository.updateBalance("jane@doe.com", 50f);
+        playerBalanceRepository.addAmountToBalance("jane@doe.com", 50f);
         for (int i = 0; i < 5; i++) {
-            playerBalanceRepository.updateBalance("jane@doe.com", -4.25f);
+            playerBalanceRepository.addAmountToBalance("jane@doe.com", -4.25f);
         }
         assertEquals(50 - 5*4.25f, playerBalanceRepository.getBalance("jane@doe.com"), 0);
     }

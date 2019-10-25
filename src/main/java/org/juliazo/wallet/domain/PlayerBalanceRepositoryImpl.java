@@ -18,7 +18,7 @@ public class PlayerBalanceRepositoryImpl implements  PlayerBalanceRepository{
     }
 
     @Override
-    public synchronized void updateBalance(String email, float updateAmount){
+    public synchronized void addAmountToBalance(String email, float updateAmount){
         float storedBalance = balanceStorage.getOrDefault(email, 0f);
         balanceStorage.put(email, storedBalance + updateAmount);
     }

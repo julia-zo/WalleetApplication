@@ -28,7 +28,7 @@ import java.util.Collection;
 import static com.google.common.base.Preconditions.checkArgument;
 
 /**
- * The public API of the credit decision solution.
+ * The public API of the wallet application.
  */
 @Path("/")
 @Singleton
@@ -44,10 +44,19 @@ public class WalletServiceV1 {
     private TransactionHistoryRepository transactionHistoryRepository;
 
     /**
-     * Handling the withdraw process for a given player
+     * Handling the withdrawl process for a given player.
+     *
+     * A transaction is accepted when all it's parameters are valid.
+     * An accepted transaction can either be successful or fail. The information regarding it's outcome
+     * will be available in the response payload.
+     *
+     * Withdrawl transactions will only be successful when the remaining balance is equal or grater than zero.
+     * A transaction which does not have an unique identifier wil fail.
      *
      * @param transactionRequestV1 withdraw request with the amount and the player's details
-     * @return the result of the transaction
+     * @return the result of the transaction with http status 200 for accepted transactions
+     * @throws {@link BadRequestException} with http status 400 for malformed request according to {@link #performArgumentChecks}
+     * @throws @throws {@link NotFoundException} with http status 404 when the given player is not present in the repository
      */
     @POST
     @Path("/v1/withdrawl")
@@ -68,14 +77,14 @@ public class WalletServiceV1 {
             float currentBalance = playerBalanceRepository.getBalance(transactionRequestV1.getEmail());
             float newBalance = currentBalance - transactionRequestV1.getTransactionAmount();
             if (newBalance >= 0) {
-                playerBalanceRepository.updateBalance(transactionRequestV1.getEmail(), -transactionRequestV1.getTransactionAmount());
+                playerBalanceRepository.addAmountToBalance(transactionRequestV1.getEmail(), -transactionRequestV1.getTransactionAmount());
                 transaction = new Transaction(transactionRequestV1.getTransactionID(),
                         "WITHDRAWL", transactionRequestV1.getTransactionAmount());
                 Transaction storedTransaction = transactionRepository.addTransaction(transaction);
                 if (storedTransaction != null) {
                     response.setTransactionResult("FAIL");
                     response.setTransactionReason("Transaction ID is invalid.");
-                    playerBalanceRepository.updateBalance(transactionRequestV1.getEmail(), transactionRequestV1.getTransactionAmount());
+                    playerBalanceRepository.addAmountToBalance(transactionRequestV1.getEmail(), transactionRequestV1.getTransactionAmount());
                     return response;
                 }
                 transactionHistoryRepository.persistTransaction(transactionRequestV1.getEmail(), transaction);
@@ -94,10 +103,19 @@ public class WalletServiceV1 {
     }
 
     /**
-     * Handling the deposit process for a given player
+     * Handling the deposit process for a given player.
+     * A player only exists in the system after it's first successful deposit transaction.
+     *
+     * A transaction is accepted when all it's parameters are valid.
+     * An accepted transaction can either be successful or fail. The information regarding it's outcome
+     * will be available in the response payload.
+     *
+     * A transaction which does not have an unique identifier wil fail.
+     * A successful transaction will increase the player's balance.
      *
      * @param transactionRequestV1 deposit request with the amount and the player's details
-     * @return the result of the transaction
+     * @return the result of the transaction with http status 200 for accepted transactions
+     * @throws {@link BadRequestException} with http status 400 for malformed request according to {@link #performArgumentChecks}
      */
     @POST
     @Path("/v1/deposit")
@@ -115,13 +133,13 @@ public class WalletServiceV1 {
         response.setTransactionID(transactionRequestV1.getTransactionID());
 
         if (transaction == null) {
-            playerBalanceRepository.updateBalance(transactionRequestV1.getEmail(), transactionRequestV1.getTransactionAmount());
+            playerBalanceRepository.addAmountToBalance(transactionRequestV1.getEmail(), transactionRequestV1.getTransactionAmount());
             transaction = new Transaction(transactionRequestV1.getTransactionID(), "DEPOSIT", transactionRequestV1.getTransactionAmount());
             Transaction storedTransaction = transactionRepository.addTransaction(transaction);
             if (storedTransaction != null) {
                 response.setTransactionResult("FAIL");
                 response.setTransactionReason("Transaction ID is invalid.");
-                playerBalanceRepository.updateBalance(transactionRequestV1.getEmail(), -transactionRequestV1.getTransactionAmount());
+                playerBalanceRepository.addAmountToBalance(transactionRequestV1.getEmail(), -transactionRequestV1.getTransactionAmount());
                 return response;
             }
             transactionHistoryRepository.persistTransaction(transactionRequestV1.getEmail(), transaction);
@@ -150,7 +168,8 @@ public class WalletServiceV1 {
      * Looking up the transaction history of a given player.
      *
      * @param email the identifier of the player
-     * @return the transaction history for this customer
+     * @return the transaction history for this player with http status 200
+     * @throws {@link NotFoundException} with http status 404 when the given player is not present in the repository
      */
     @GET
     @Path("/v1/history/{email}")
@@ -170,7 +189,9 @@ public class WalletServiceV1 {
      * Looking up the account balance of a given player.
      *
      * @param email the identifier of the player
-     * @return the balance for given player
+     * @return the balance for given player with http status 200
+     * @throws {@link NotFoundException} with http status 404 when the given player is not present in the repository
+     *
      */
     @GET
     @Path("/v1/balance/{email}")
