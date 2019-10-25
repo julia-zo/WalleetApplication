@@ -37,14 +37,6 @@ public class TransactionResponseV1 {
     public TransactionResponseV1() {
     }
 
-    public TransactionResponseV1(String email, float transactionAmount, long transactionID, String transactionResult, String transactionReason) {
-        this.email = email;
-        this.transactionAmount = transactionAmount;
-        this.transactionID = transactionID;
-        this.transactionResult = transactionResult;
-        this.transactionReason = transactionReason;
-    }
-
     public String getEmail() {
         return email;
     }

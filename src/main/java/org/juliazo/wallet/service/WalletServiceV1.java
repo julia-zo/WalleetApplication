@@ -12,8 +12,16 @@ import org.juliazo.wallet.domain.TransactionRepository;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.BadRequestException;
 
 import java.util.Collection;
 
@@ -57,7 +65,6 @@ public class WalletServiceV1 {
         response.setTransactionID(transactionRequestV1.getTransactionID());
 
         if (transaction == null) {
-            //todo include exception handler for player not found on get balance
             float currentBalance = playerBalanceRepository.getBalance(transactionRequestV1.getEmail());
             float newBalance = currentBalance - transactionRequestV1.getTransactionAmount();
             if (newBalance >= 0) {
@@ -131,11 +138,14 @@ public class WalletServiceV1 {
     }
 
     private void performArgumentChecks(TransactionRequestV1 transactionRequestV1) {
-        checkArgument(transactionRequestV1 != null);
-        checkArgument(!Strings.isNullOrEmpty(transactionRequestV1.getEmail()));
-        checkArgument(transactionRequestV1.getTransactionAmount() > 0);
-        checkArgument(transactionRequestV1.getTransactionID() > 0);
-        //todo exception handler for illegal argument
+        try {
+            checkArgument(transactionRequestV1 != null);
+            checkArgument(!Strings.isNullOrEmpty(transactionRequestV1.getEmail()));
+            checkArgument(transactionRequestV1.getTransactionAmount() > 0);
+            checkArgument(transactionRequestV1.getTransactionID() > 0);
+        } catch (IllegalArgumentException exception) {
+            throw new BadRequestException(exception.getCause());
+        }
     }
 
     /**
@@ -154,6 +164,9 @@ public class WalletServiceV1 {
         Collection<Transaction> playerTransactions;
 
         playerTransactions = transactionHistoryRepository.lookupTransactionHistory(email);
+        if (playerTransactions.isEmpty()) {
+            throw new NotFoundException("Player not Found");
+        }
 
         return new TransactionHistoryV1(email, playerTransactions);
     }
@@ -169,7 +182,6 @@ public class WalletServiceV1 {
     @Produces(MediaType.APPLICATION_JSON)
     public BalanceResponseV1 handleBalanceRequestV1(
             @PathParam("email") String email) {
-        //todo include exception handler for player not found no get balance
         return new BalanceResponseV1(email, playerBalanceRepository.getBalance(email));
     }
 }

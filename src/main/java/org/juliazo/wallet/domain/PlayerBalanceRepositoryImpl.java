@@ -1,8 +1,7 @@
 package org.juliazo.wallet.domain;
 
 import com.google.common.collect.Maps;
-import org.juliazo.wallet.exception.InvalidPlayerException;
-
+import javax.ws.rs.NotFoundException;
 import java.util.Map;
 
 public class PlayerBalanceRepositoryImpl implements  PlayerBalanceRepository{
@@ -13,7 +12,7 @@ public class PlayerBalanceRepositoryImpl implements  PlayerBalanceRepository{
     public float getBalance(String email){
         Float balance = balanceStorage.get(email);
         if (balance == null) {
-            throw new InvalidPlayerException();
+            throw new NotFoundException();
         }
         return balance;
     }

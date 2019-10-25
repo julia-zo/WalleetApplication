@@ -28,8 +28,11 @@ public class TransactionHistoryV1 {
         this.history = history;
     }
 
-    @Override
-    public String toString() {
-        return String.format("TransactionHistoryV1 [email=%s, history=%s]", email, history.toString());
+    public String getEmail() {
+        return email;
+    }
+
+    public Collection getHistory() {
+        return history;
     }
 }
