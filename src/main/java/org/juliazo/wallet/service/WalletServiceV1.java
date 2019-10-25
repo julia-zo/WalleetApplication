@@ -81,12 +81,10 @@ public class WalletServiceV1 {
                 transactionHistoryRepository.persistTransaction(transactionRequestV1.getEmail(), transaction);
                 response.setTransactionResult("SUCCESS");
                 response.setTransactionReason("Player has sufficient balance.");
-
             } else {
                 response.setTransactionResult("FAIL");
                 response.setTransactionReason("Player has insufficient balance.");
             }
-
         } else {
             response.setTransactionResult("FAIL");
             response.setTransactionReason("Transaction ID is invalid.");
@@ -160,10 +158,7 @@ public class WalletServiceV1 {
     public TransactionHistoryV1 handleTransactionHistoryRequestV1(
             @PathParam("email") String email) {
 
-        checkArgument(!Strings.isNullOrEmpty(email));
-        Collection<Transaction> playerTransactions;
-
-        playerTransactions = transactionHistoryRepository.lookupTransactionHistory(email);
+        Collection<Transaction> playerTransactions = transactionHistoryRepository.lookupTransactionHistory(email);
         if (playerTransactions.isEmpty()) {
             throw new NotFoundException("Player not Found");
         }
